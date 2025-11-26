@@ -1,0 +1,64 @@
+name: Autograding Tests
+on:
+  - push
+  - workflow_dispatch
+  - repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        ./test/download_lnd.sh
+      
+    - name: Exercise 1
+      id: exercise1
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: "Exercise 1"
+        command: "test/001-check_preimage.sh"
+        expected-output: "PASS"
+        comparison-method: exact
+        timeout: 10
+        max-score: 10
+    
+    - name: Exercise 2
+      id: exercise2
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: "Exercise 2"
+        command: "submissions/002.sh"
+        expected-output: "15000"
+        comparison-method: exact
+        timeout: 10
+        max-score: 10
+    
+    - name: Exercise 3
+      id: exercise3
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: "Exercise 3"
+        command: "test/003-check_forward.sh"
+        expected-output: "PASS"
+        comparison-method: exact
+        timeout: 10
+        max-score: 10
+    
+    # Report results
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        EXERCISE1_RESULTS: "${{ steps.exercise1.outputs.result }}"
+        EXERCISE2_RESULTS: "${{ steps.exercise2.outputs.result }}"
+        EXERCISE3_RESULTS: "${{ steps.exercise3.outputs.result }}"
+      with:
+        runners: exercise1,exercise2,exercise3
